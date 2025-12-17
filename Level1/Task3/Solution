@@ -1,0 +1,5 @@
+1. Goto /etc/ansible
+2. Edit ansible.cfg file 
+3. Add 
+[defaults]
+remote_user = mark 

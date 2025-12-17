@@ -1,0 +1,12 @@
+---
+- name: Create File On App Servers
+  hosts: app_servers
+  become: true
+  tasks:
+    - name: Create Empty File 
+      ansible.builtin.file:
+        path: /usr/src/web.txt
+        state: touch
+        owner: "{{ ansible_user}}"
+        group: "{{ ansible_user}}"
+        mode: '0744'

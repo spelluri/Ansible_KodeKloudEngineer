@@ -1,0 +1,9 @@
+---
+- name: Copy Files to App Servers
+  hosts: app_servers
+  become: true
+  tasks: 
+    - name : copying files
+      ansible.builtin.copy: 
+         src: /usr/src/finance/index.html
+         dest: /opt/finance
