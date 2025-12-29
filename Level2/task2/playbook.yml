@@ -1,0 +1,10 @@
+---
+- name: Install Package On All App Servers
+  hosts: app_servers
+  become: true
+  
+  tasks:
+    - name: Install Samba Package 
+      ansible.builtin.yum:
+         name: samba
+         state: present

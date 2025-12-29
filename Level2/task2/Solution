@@ -1,0 +1,18 @@
+why did you use state:present instead of latest . we have to install samba package in this task
+
+Short answer first
+
+👉 state: present is the safest and most correct choice for this task
+👉 state: latest is not required and can be risky in automation
+
+Difference between present and latest
+State	What it does
+present	Installs the package if not already installed
+latest	Installs and upgrades the package every time a newer version exists
+
+nterview-grade reasoning 🧠
+
+If asked “Why not latest?”, the correct answer is:
+
+“Because the requirement was to ensure the package is installed, not upgraded. Using present maintains idempotency and avoids unintended changes.”
+

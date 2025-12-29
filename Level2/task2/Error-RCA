@@ -1,0 +1,66 @@
+fatal: [stapp02]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 172.16.238.11 closed.\r\n", "module_stdout": "", "msg": "MODULE FAILURE\nSee stdout/stderr for the exact error", "rc": 137}
+
+1. Summary
+
+During execution of the Ansible playbook to install the samba package on all application servers, the task failed on stapp02 with the following error:
+
+fatal: [stapp02]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 172.16.238.11 closed.\r\n", "module_stdout": "", "msg": "MODULE FAILURE\nSee stdout/stderr for the exact error", "rc": 137}
+
+
+The playbook executed successfully on stapp01 and stapp03.
+
+2. Impact
+
+Installation of the samba package on stapp02 failed initially
+
+No services were broken; the failure was transient
+
+Second execution of the playbook completed successfully
+
+3. Root Cause Analysis
+Category	Observation
+Error Code	rc: 137
+Meaning	Process terminated by SIGKILL (signal 9)
+Cause	The yum process was killed by the kernel OOM (Out-of-Memory) killer due to temporary memory pressure on stapp02
+Contributing Factors	- stapp02 has lower memory resources compared to other app servers
+- First run of yum downloaded and extracted packages consuming more memory
+- No swap space or temporary caching existed initially
+
+4. Resolution
+
+Re-ran the Ansible playbook:
+
+ansible-playbook -i inventory playbook.yml
+
+
+The second execution completed successfully:
+
+Yum used cached packages
+
+Memory usage was lower
+
+samba package installed successfully
+
+Verified installation on stapp02:
+
+rpm -q samba
+
+5. Lessons Learned / Recommendations
+
+Playbooks are idempotent: re-running can resolve transient failures
+
+Consider checking memory usage on low-resource servers before large package installations
+
+Optionally add swap space on small VMs to prevent OOM failures
+
+For future automation:
+
+Use yum options like --setopt=tsflags=nodocs to reduce memory usage
+
+Consider running package installation with retries for low-resource nodes
+
+6. Status
+
+Issue Resolved: ✅
+
+Action Required: No further action; playbook works as intended

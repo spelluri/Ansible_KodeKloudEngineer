@@ -1,0 +1,14 @@
+1. Generate ssh key pair in ansible controller .
+ssh-keygen -t rsa -b 2048 
+
+2. Copy ssh public key to app server3 
+ssh-copy-id -i ~/.ssh/id_rsa.pub banner@172.16.238.12
+
+3. Make changes in inventory file .
+Add ansible_user=banner 
+
+stapp03 ansible_host=172.16.238.12 ansible_user=banner
+
+4. Run ansible ad-hoc command to complete the task .
+ansible stapp03 -i /home/thor/ansible/inventory -m ping 
+
