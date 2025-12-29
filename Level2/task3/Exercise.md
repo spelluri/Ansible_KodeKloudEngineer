@@ -5,6 +5,6 @@ The Nautilus DevOps team has some data on each app server in Stratos DC that the
 Create a playbook named playbook.yml under /home/thor/ansible directory on jump host, an inventory file is already placed under /home/thor/ansible/ directory on Jump Server itself.
 
 
-Create an archive blog.tar.gz (make sure archive format is tar.gz) of /usr/src/sysops/ directory ( present on each app server ) and copy it to /opt/sysops/ directory on all app servers. The user and group owner of archive blog.tar.gz should be tony for App Server 1, steve for App Server 2 and banner for App Server 3.
+Create an archive official.tar.gz (make sure archive format is tar.gz) of /usr/src/data/ directory ( present on each app server ) and copy it to /opt/data/ directory on all app servers. The user and group owner of archive official.tar.gz should be tony for App Server 1, steve for App Server 2 and banner for App Server 3.
 
 Note: Validation will try to run playbook using command ansible-playbook -i inventory playbook.yml so please make sure playbook works this way, without passing any extra arguments.

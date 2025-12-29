@@ -1,0 +1,41 @@
+---
+- name: Unarchive application data on app servers
+  hosts: all
+  become: true
+
+  vars: 
+    archive_dest: /opt/dba/
+    archive_src: /usr/src/dba/nautilus.zip
+     
+    owner_map:
+        stapp01: tony
+        stapp02: steve
+        stapp03: banner
+
+  tasks:
+    - name: Ensure extraction directory exists 
+      file:
+        path: "{{ archive_dest }}"
+        state: directory
+        mode: '0777'
+    
+    - name: Copy zip file to app servers
+      copy:
+        src: "{{ archive_src }}"
+        dest: "{{ archive_dest }}/nautilus.zip"
+        mode: '0644'
+
+    - name: Unarchive the application data
+      unarchive:
+        src: "{{ archive_dest }}/nautilus.zip"
+        dest: "{{ archive_dest }}"
+        remote_src: yes
+        mode: '0777'
+
+    - name: Set ownership based on hostname
+      file:
+        path: "{{ archive_dest }}"
+        owner: "{{ owner_map[inventory_hostname] }}"
+        group: "{{ owner_map[inventory_hostname] }}"
+        mode: '0777'
+        recurse: yes

@@ -1,0 +1,36 @@
+---
+- name: Install Apache httpd on App servers and Deploy web file in httpd
+  hosts: all
+  become: true
+
+  vars:
+    index_file: /var/www/html/index.html
+    web_content: |
+       Welcome to XfusionCorp!
+       This is Nautilus sample file, created using Ansible!
+       Please do not modify this file manually!
+  
+  tasks:
+    - name: Install Apache httpd package
+      package:
+        name: httpd
+        state: present
+
+    - name: Ensure Apache httpd service is started and enabled
+      service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Deploy custom index.html file
+      blockinfile:
+        path: "{{ index_file }}"
+        block: "{{ web_content }}"
+        create: yes
+
+    - name: Ensure proper permissions on index.html
+      file:
+        path: "{{ index_file }}"
+        owner: apache
+        group: apache
+        mode: '0755'

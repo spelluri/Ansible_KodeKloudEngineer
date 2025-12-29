@@ -1,0 +1,32 @@
+---
+- name: Archive and copy application data on app servers
+  hosts: all
+  become: true
+
+  vars: 
+    archive_src: /usr/src/data/
+    archive_dest: /opt/data/official.tar.gz
+
+    owner_map:
+       stapp01: tony
+       stapp02: steve
+       stapp03: banner
+    
+  tasks:
+    - name: Ensure Directory Exists 
+      file:
+       path: /opt/data
+       state: directory  
+       mode: '0755'
+    
+    - name: Create .tar.gz archive of application data 
+      archive: 
+        path: "{{ archive_src }}"
+        dest: "{{ archive_dest }}"
+        format: gz
+
+    - name: Set ownership based on hostname
+      file:
+        path: "{{ archive_dest }}"
+        owner: "{{ owner_map[inventory_hostname] }}"
+        group: "{{ owner_map[inventory_hostname] }}"

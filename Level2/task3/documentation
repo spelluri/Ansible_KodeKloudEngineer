@@ -1,0 +1,123 @@
+Ansible Playbook Documentation: playbook.yml
+1️⃣ Playbook Overview
+
+Purpose:
+The playbook archives application data from /usr/src/data/ on each app server in the Stratos data center and copies the archive to /opt/data/. It also ensures that the archive has host-specific ownership.
+
+Execution:
+The playbook is executed with:
+
+ansible-playbook -i inventory playbook.yml
+
+
+Hosts: All app servers defined in the inventory.
+
+Privilege Escalation: become: yes (tasks run with sudo privileges to manage directories and ownership)
+
+2️⃣ Variables
+Variable	Description
+archive_src	Source directory to archive (/usr/src/data)
+archive_dest	Destination path of the archive on the host (/opt/data/official.tar.gz)
+owner_map	Dictionary mapping each host (inventory_hostname) to the desired file owner for the archive
+
+Example owner_map:
+
+owner_map:
+  stapp01: tony
+  stapp02: steve
+  stapp03: banner
+
+
+Note: This allows dynamic assignment of ownership per host, independent of the SSH connection user.
+
+3️⃣ Tasks
+Task 1: Ensure destination directory exists
+- name: Ensure destination directory exists
+  file:
+    path: /opt/data
+    state: directory
+    mode: '0755'
+
+
+Purpose:
+
+Creates the destination directory /opt/data/ if it doesn’t exist.
+
+Sets permissions to 0755 (owner can read/write/execute; group/others can read/execute).
+
+Task 2: Create tar.gz archive of application data
+- name: Create tar.gz archive of application data
+  archive:
+    path: "{{ archive_src }}"
+    dest: "{{ archive_dest }}"
+    format: gz
+
+
+Purpose:
+
+Creates a compressed archive of /usr/src/data/ as /opt/data/official.tar.gz.
+
+Uses the built-in Ansible archive module (preferred over shell commands).
+
+Ensures idempotent behavior in managing the archive.
+
+Task 3: Set ownership of the archive
+- name: Set ownership of the archive as per server
+  file:
+    path: "{{ archive_dest }}"
+    owner: "{{ owner_map[inventory_hostname] }}"
+    group: "{{ owner_map[inventory_hostname] }}"
+
+
+Purpose:
+
+Dynamically assigns owner and group based on the current host.
+
+inventory_hostname is a built-in variable representing the host being processed.
+
+owner_map[inventory_hostname] returns the correct user for each host:
+
+stapp01 → tony
+
+stapp02 → steve
+
+stapp03 → banner
+
+This decouples SSH connection user from file ownership.
+
+4️⃣ Key Concepts Highlighted
+
+Separation of connection vs system state
+
+SSH user (ansible_user) is separate from file owner.
+
+Dynamic host-specific behavior
+
+Host-specific ownership achieved using a dictionary lookup with inventory_hostname.
+
+Idempotency
+
+file and archive modules ensure tasks are repeatable without unintended changes.
+
+Best Practices
+
+Avoid shell commands for archiving or setting permissions.
+
+Keep variables centralized for readability and maintainability.
+
+5️⃣ Expected Outcome
+
+After execution on all hosts:
+
+/opt/data/ exists on each server.
+
+/opt/data/official.tar.gz is created, containing /usr/src/data/.
+
+Archive ownership:
+
+Host	Owner/Group
+stapp01	tony
+stapp02	steve
+stapp03	banner
+
+Playbook is fully idempotent and can be re-run without errors.

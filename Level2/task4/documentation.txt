@@ -1,0 +1,152 @@
+Ansible Playbook Documentation: playbook.yml
+1️⃣ Playbook Overview
+
+Purpose:
+This playbook automates the distribution and extraction of a zip archive (nautilus.zip) from the jump host to all app servers. It ensures that the extracted files have the correct ownership and permissions as per each server’s sudo user.
+
+Execution Command:
+
+ansible-playbook -i inventory playbook.yml
+
+
+Hosts: All app servers listed in the inventory file (/home/thor/ansible/inventory).
+
+Privilege Escalation:
+become: yes is used to ensure tasks can manage directories, files, and permissions with root privileges.
+
+2️⃣ Variables
+Variable	Description
+zip_src	Path of the zip archive on the jump host (/usr/src/dba/nautilus.zip).
+dest_dir	Directory on remote hosts where the zip will be extracted (/opt/dba).
+owner_map	Dictionary mapping each host (inventory_hostname) to the sudo user who should own the files.
+
+Example owner_map:
+
+owner_map:
+  stapp01: tony
+  stapp02: steve
+  stapp03: banner
+
+
+This allows dynamic assignment of ownership per host, independent of SSH connection users.
+
+3️⃣ Tasks
+Task 1: Ensure destination directory exists
+- name: Ensure destination directory exists
+  file:
+    path: "{{ dest_dir }}"
+    state: directory
+    mode: '0777'
+
+
+Purpose:
+
+Creates the /opt/dba directory on each host if it doesn’t exist.
+
+Sets permissions to 0777 to allow full read/write/execute access.
+
+Task 2: Copy zip archive to remote hosts
+- name: Copy zip archive to remote hosts
+  copy:
+    src: "{{ zip_src }}"
+    dest: "{{ dest_dir }}/nautilus.zip"
+    mode: '0644'
+
+
+Purpose:
+
+Transfers the nautilus.zip archive from the jump host to each app server.
+
+Ensures the zip file is readable by the remote host user.
+
+Task 3: Extract zip archive
+- name: Extract zip archive on remote hosts
+  unarchive:
+    src: "{{ dest_dir }}/nautilus.zip"
+    dest: "{{ dest_dir }}"
+    remote_src: yes
+    mode: '0777'
+
+
+Purpose:
+
+Extracts the zip archive on each remote host.
+
+remote_src: yes indicates the zip file already exists on the host.
+
+Permissions for extracted files are set to 0777 during extraction.
+
+Task 4: Set ownership and permissions recursively
+- name: Set ownership and permissions recursively
+  file:
+    path: "{{ dest_dir }}"
+    owner: "{{ owner_map[inventory_hostname] }}"
+    group: "{{ owner_map[inventory_hostname] }}"
+    mode: '0777'
+    recurse: yes
+
+
+Purpose:
+
+Applies ownership and permissions recursively to all extracted files and directories.
+
+Uses inventory_hostname to dynamically determine the correct sudo user for each host:
+
+stapp01 → tony
+
+stapp02 → steve
+
+stapp03 → banner
+
+This ensures every extracted file has the correct owner, group, and permissions.
+
+4️⃣ Key Concepts Highlighted
+
+Separation of connection vs system state
+
+ansible_user in inventory defines SSH connection.
+
+owner_map defines file ownership on remote hosts.
+
+Dynamic host-specific behavior
+
+Ownership mapping uses inventory_hostname to adapt per host automatically.
+
+Idempotency
+
+file, copy, and unarchive modules ensure the tasks can run multiple times without causing errors.
+
+Best Practices
+
+Avoids shell commands for zip extraction or ownership management.
+
+Centralizes variables for clarity and maintainability.
+
+5️⃣ Expected Outcome
+
+After running the playbook:
+
+/opt/dba exists on all app servers.
+
+nautilus.zip is copied to /opt/dba.
+
+Zip archive is extracted inside /opt/dba.
+
+All extracted files and directories have:
+
+Owner & Group: per host (tony, steve, banner)
+
+Permissions: 0777
+
+Playbook can be safely re-run without errors.
+
+6️⃣ Execution Directory Structure
+/home/thor/ansible/
+├── inventory        # Inventory file with app server details
+├── playbook.yml     # This Ansible playbook
+
+
+Command to execute:
+
+cd /home/thor/ansible
+ansible-playbook -i inventory playbook.yml
