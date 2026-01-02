@@ -1,0 +1,36 @@
+---
+- name: Create Empty File and Symbolic Links on all App Servers
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Create an Empty File on App Server1
+      file:
+        path: /opt/sysops/blog.txt
+        state: touch
+        owner: tony
+        group: tony
+      when: inventory_hostname == 'stapp01'
+
+    - name: Create Symbolic Link to blog.txt on App Server2
+      file:
+        path: /opt/sysops/story.txt
+        state: touch
+        owner: steve
+        group: steve
+      when: inventory_hostname == 'stapp02'
+
+    - name: Create Symbolic Link to blog.txt on App Server3
+      file:
+        path: /opt/sysops/media.txt
+        state: touch
+        owner: banner
+        group: banner
+      when: inventory_hostname == 'stapp03'
+
+    - name: Create Symbolic Links to /var/www/html on all App Servers
+      file:
+        src: /opt/sysops
+        dest: /var/www/html
+        state: link
+

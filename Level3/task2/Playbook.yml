@@ -1,0 +1,59 @@
+---
+- name: Create File and ACL Permisiions on App Servers
+  hosts: all
+  become: true
+  tasks:
+    - name: Create Empty File on App Server1
+      file: 
+        path: /opt/sysops/blog.txt
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname == 'stapp01'
+
+    - name: Set ACL group tony read-only on blog.txt
+      acl:
+       path: /opt/sysops/blog.txt
+       entity: tony
+       etype: group
+       permissions: r
+       state: present
+      when: inventory_hostname == 'stapp01'
+
+    - name: Create Empty File on App Server2
+      file:
+        path: /opt/sysops/story.txt
+        state: touch
+        owner: root
+        group: root
+        mode: '0644'
+      when: inventory_hostname == 'stapp02'
+
+    - name: Set ACL group steve read-write on story.txt
+      acl:
+        path: /opt/sysops/story.txt
+        entity: steve
+        etype: user
+        permissions: rw
+        state: present
+      when: inventory_hostname == 'stapp02'
+
+
+    - name: Create Empty File on App Server3
+      file:
+       path: /opt/sysops/media.txt
+       state: touch
+       owner: root
+       group: root
+       mode: '0644'
+      when: inventory_hostname == 'stapp03'
+
+    - name: Set ACL group banner read-write on media.txt
+      acl:
+       path: /opt/sysops/media.txt
+       entity: banner
+       etype: group
+       permissions: rw
+       state: present
+      when: inventory_hostname == 'stapp03'
