@@ -1,0 +1,37 @@
+---
+- name: Add users and groups on app server 3
+  hosts: stapp03
+  become: true
+  vars_files:
+    - data/users.yml
+    - secrets/passwords.yml
+
+  tasks:
+    - name: Ensure required groups exists 
+      group: 
+        name: "{{ item }}"
+        state: present
+      loop:
+        - admins
+        - developers
+    - name: Create Developer Users 
+      user: 
+        name: "{{ item }}"
+        group: developers
+        home: /var/www/
+        password: "{{ developers_password }}"
+        state: present
+      loop: "{{ developers }}"
+    - name: Create Admin Users
+      user:
+        name: "{{ item }}"
+        group: admins
+        password: "{{ admins_password }}"
+        state: present
+      loop: "{{ admins }}"
+    - name: Add admin users to Wheel group for sudo access
+      user:
+        name: "{{ item }}"
+        groups: wheel
+        append: yes
+      loop: "{{ admins }}"

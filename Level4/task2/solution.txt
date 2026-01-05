@@ -1,0 +1,110 @@
+🚀 User & Group Management Automation with Ansible
+Nautilus Project – Stratos DC (xFusionCorp Industries)
+This document describes the Ansible‑based automation used to onboard new developers and admins for the Nautilus project. It covers directory structure, variable files, password encryption, and execution steps.
+The actual playbook (add_users.yml) is stored separately in this repository.
+
+📁 Project Structure
+Code
+playbooks/
+├── add_users.yml              # Playbook (stored separately)
+├── ansible.cfg
+├── inventory
+├── data/
+│   └── users.yml
+└── secrets/
+    ├── passwords.yml          # Encrypted with Ansible Vault
+    └── vault.txt              # Vault password file
+
+📄 1. Inventory
+The inventory file defines the target host (App Server 3):
+
+Code
+[appserver3]
+stapp02 ansible_host=<IP> ansible_user=<user> ansible_ssh_pass=<password>
+
+📄 2. User Definitions (data/users.yml)
+This file contains the list of users grouped by role:
+
+yaml
+admins:
+  - rob
+  - david
+  - joy
+
+developers:
+  - tim
+  - ray
+  - jim
+  - mark
+These variables are loaded into the playbook using vars_files.
+
+🔐 3. Password Hashing & Vault Encryption
+Developer password
+8FmzjvFU6S
+
+Admin password
+YchZHRcLkL
+
+Ansible requires hashed passwords.
+Generate SHA‑512 hashes:
+
+bash
+ansible all -i localhost, -m debug -a "msg={{ '8FmzjvFU6S' | password_hash('sha512') }}"
+ansible all -i localhost, -m debug -a "msg={{ 'YchZHRcLkL' | password_hash('sha512') }}"
+Copy the resulting $6$... hashes.
+
+Create secrets/passwords.yml (before encryption)
+yaml
+developers_password: "$6$HASH_FOR_8FmzjvFU6S"
+admins_password: "$6$HASH_FOR_YchZHRcLkL"
+Encrypt the file
+bash
+ansible-vault encrypt secrets/passwords.yml --vault-password-file secrets/vault.txt
+
+⚙️ 4. ansible.cfg
+Ensure Ansible automatically uses the vault password file:
+
+Code
+[defaults]
+vault_password_file = ./secrets/vault.txt
+This allows the playbook to run without additional flags.
+
+▶️ 5. Running the Playbook
+Validation and execution use:
+
+bash
+ansible-playbook -i inventory add_users.yml
+No extra arguments are required.
+
+✔️ 6. What the Automation Does
+Creates admins and developers groups
+
+Creates all users listed in users.yml
+
+Developers:
+
+Home directory: /var/www
+
+Password: 8FmzjvFU6S (hashed & encrypted)
+
+Admins:
+
+Default home directory (/home/<user>)
+
+Password: YchZHRcLkL (hashed & encrypted)
+
+Added to wheel group for sudo access
+
+Fully idempotent — safe to run multiple times
+
+Passwords stored securely using Ansible Vault
+
+🧩 7. Notes & Troubleshooting
+Ensure no leading/trailing spaces exist in users.yml
+
+Ensure the playbook uses name: "{{ item }}" (no extra spaces)
+
+If you see invalid user name ' tim', the issue is whitespace in the playbook, not the YAML
+
+If you see password appears not to have been hashed, re‑hash and re‑encrypt passwords.yml
+

@@ -1,0 +1,33 @@
+---
+- name: Install Apache on all app servers and Deploy Custom index.html
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    - name: Create facts.txt file with custom content
+      blockinfile:
+        path: /root/facts.txt
+        create: yes
+        block: |
+         Ansible managed node architecture is {{ ansible_architecture }}
+
+    - name: Install Apache httpd package
+      package:
+        name: httpd
+        state: present
+
+    - name: copy facts from facts.txt to apache index.html
+      copy:
+        src: /root/facts.txt
+        dest: /var/www/html/index.html
+        remote_src: yes
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure Apache httpd service is started and enabled
+      service:
+        name: httpd
+        state: started
+        enabled: true
