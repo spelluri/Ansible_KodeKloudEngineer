@@ -1,0 +1,139 @@
+Ansible Role: HTTPD Installation & Dynamic Index Page
+Overview
+This repository contains an Ansible role that installs Apache HTTPD, ensures the service is running, and deploys a dynamic index.html file using a Jinja2 template.
+The template automatically inserts the correct server name using Ansible facts, making the role reusable across multiple hosts.
+
+This setup was validated in a KodeKloud‑style environment using:
+
+Code
+ansible-playbook -i inventory playbook.yml
+Directory Structure
+Code
+ansible/
+├── inventory
+├── playbook.yml
+└── roles/
+    └── httpd/
+        ├── tasks/
+        │   └── main.yml
+        ├── templates/
+        │   └── index.html.j2
+        └── defaults/   (optional)
+1. Playbook Configuration
+File: ansible/playbook.yml
+
+yaml
+---
+- hosts: stapp01
+  become: yes
+  roles:
+    - httpd
+This playbook applies the httpd role to App Server 1 (stapp01).
+
+2. Jinja2 Template
+File: ansible/roles/httpd/templates/index.html.j2
+
+jinja2
+This file was created using Ansible on {{ inventory_hostname }}
+Purpose
+Dynamically inserts the correct hostname.
+
+Avoids hard‑coding server names.
+
+Ensures portability across multiple app servers.
+
+3. Role Tasks
+File: ansible/roles/httpd/tasks/main.yml
+
+yaml
+---
+# Install the latest version of HTTPD
+- name: install the latest version of HTTPD
+  yum:
+    name: httpd
+    state: latest
+
+# Ensure HTTPD service is running
+- name: Start service httpd
+  service:
+    name: httpd
+    state: started
+
+# Deploy index.html from Jinja2 template
+- name: Deploy index.html to App Server1
+  template:
+    src: index.html.j2
+    dest: /var/www/html/index.html
+    owner: "{{ ansible_user }}"
+    group: "{{ ansible_user }}"
+    mode: '0777'
+Key Notes
+template: module is required for Jinja2 rendering.
+
+owner and group use {{ ansible_user }} to match the correct sudo user:
+
+tony on stapp01
+
+steve on stapp02
+
+banner on stapp03
+
+Permissions set to 0777 as required.
+
+4. Running the Playbook
+From inside the ansible/ directory:
+
+bash
+ansible-playbook -i inventory playbook.yml
+No extra arguments are needed.
+
+5. Expected Output on Target Server
+After running the playbook, the file:
+
+Code
+/var/www/html/index.html
+Should contain:
+
+Code
+This file was created using Ansible on stapp01
+And have:
+
+Owner: respective sudo user (e.g., tony)
+
+Group: same as owner
+
+Permissions: 0777
+
+6. Troubleshooting Summary
+Issue: Template not found
+Cause: Role directory was named role/ instead of roles/  
+Fix: Renamed directory:
+
+bash
+mv ansible/role ansible/roles
+Issue: Unsupported parameter user
+Cause: Used copy: module instead of template:  
+Fix: Replaced:
+
+yaml
+copy:
+with:
+
+yaml
+template:
+And replaced:
+
+yaml
+user:
+with:
+
+yaml
+owner:
+7. Final Notes
+This role is now fully reusable across all app servers.
+
+The template dynamically adapts to each host.
+
+The structure follows Ansible best practices.
+
+The documentation is GitHub‑ready for future reference.

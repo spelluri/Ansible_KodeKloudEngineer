@@ -1,0 +1,36 @@
+---
+- name: Ensure httpd and php are installed and deploy phpinfo.php
+  hosts: stapp02
+  become: yes
+  tasks:
+    - name: Install the latest version of httpd and php 
+      package:
+       name:  
+        - httpd
+        - php
+       state: present
+    - name: Ensure custom Apache root file exist 
+      file: 
+        path: /var/www/html/myroot
+        state: directory
+        owner: apache
+        group: apache
+        mode: '0755'
+    - name: Update root directory location
+      replace:
+        path: /etc/httpd/conf/httpd.conf
+        regexp: '^DocumentRoot\s+.*'
+        replace: 'DocumentRoot "/var/www/html/myroot"'
+    - name: Deploy phpinfo.php file to app serever 3
+      template:
+       src: phpinfo.php.j2
+       dest: /var/www/html/myroot/phpinfo.php
+       owner: apache
+       group: apache
+       mode: '0644'
+    - name: Ensure httpd service is started and enabled
+      service:
+       name: httpd
+       state: started
+       enabled: true
+       
